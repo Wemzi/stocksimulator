@@ -10,4 +10,5 @@ RUN chmod +x ./gradlew
 RUN chmod +x ./fastapi-backend/backend.py
 #Python must run first as the SpringBoot application requires its input to be able to generate a stock chart on request. 
 CMD ["sh", "-c", "fastapi run ./fastapi-backend/backend.py & sleep 10 & ./gradlew bootRun & wait"]
-EXPOSE 3000
+EXPOSE 30000:8080
+EXPOSE 30001:8000
