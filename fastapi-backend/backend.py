@@ -2,6 +2,21 @@ from fastapi import FastAPI
 
 import json
 import random
+from datetime import datetime, timedelta
+
+# Store the last run time
+last_run_time = datetime.now()
+
+def should_run():
+    # Get the current time
+    current_time = datetime.now()
+    # Check if 5 minutes have passed since the last run
+    if current_time - last_run_time >= timedelta(minutes=5):
+        return True
+    return False
+
+
+
 
 # Sample stock data
 stocks = [
@@ -37,5 +52,7 @@ def updateStockValues():
 
 @app.get("/backend/updatestockdata")
 async def root():
-    updateStockValues()
+    if should_run():
+        updateStockValues()
+        last_run_time = datetime.now()
     return stocks
