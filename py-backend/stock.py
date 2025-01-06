@@ -16,7 +16,7 @@ router = APIRouter(
 @router.get('/', response_model=List[schemas.CreateStock])
 def test_stocks(db: Session = Depends(get_db)):
 
-    stock = db.query(models.stock).all()
+    stock = db.query(model.Stock).all()
 
 
     return  stock
@@ -24,7 +24,7 @@ def test_stocks(db: Session = Depends(get_db)):
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=List[schemas.CreateStock])
 def test_stocks_sent(stock_stock:schemas.CreateStock, db:Session = Depends(get_db)):
 
-    new_stock = models.stock(**stock_stock.dict())
+    new_stock = model.Stock(**stock_stock.dict())
     db.add(new_stock)
     db.commit()
     db.refresh(new_stock)
@@ -35,7 +35,7 @@ def test_stocks_sent(stock_stock:schemas.CreateStock, db:Session = Depends(get_d
 @router.get('/{id}', response_model=schemas.CreateStock, status_code=status.HTTP_200_OK)
 def get_test_one_stock(id:int ,db:Session = Depends(get_db)):
 
-    idv_stock = db.query(models.stock).filter(models.stock.id == id).first()
+    idv_stock = db.query(model.Stock).filter(model.Stock.id == id).first()
 
     if idv_stock is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"The id: {id} you requested for does not exist")
@@ -44,7 +44,7 @@ def get_test_one_stock(id:int ,db:Session = Depends(get_db)):
 @router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_test_stock(id:int, db:Session = Depends(get_db)):
 
-    deleted_stock = db.query(models.stock).filter(models.stock.id == id)
+    deleted_stock = db.query(model.Stock).filter(model.Stock.id == id)
 
 
     if deleted_stock.first() is None:
@@ -58,7 +58,7 @@ def delete_test_stock(id:int, db:Session = Depends(get_db)):
 @router.put('/stocks/{id}', response_model=schemas.CreateStock)
 def update_test_stock(update_stock:schemas.StockBase, id:int, db:Session = Depends(get_db)):
 
-    updated_stock =  db.query(models.stock).filter(models.stock.id == id)
+    updated_stock =  db.query(model.Stock).filter(model.Stock.id == id)
 
     if updated_stock.first() is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"The id:{id} does not exist")

@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 DATABASE_URL = "postgresql+asyncpg://postgres:7269@localhost/fastapi"
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(DATABASE_URL, echo=True, connect_args={"timeout" : 5})
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

@@ -6,8 +6,10 @@ from model import Stock
 import schemas
 import model
 import stock
-from db import DATABASE_URL, engine, Base
+from db import DATABASE_URL, engine, Base, SessionLocal
+from sqlalchemy import inspect
 import sys
+import logging
 
 # Store the last run time
 last_run_time = datetime.now()
@@ -36,13 +38,14 @@ stocks = [
     {"symbol": "AMD", "value": 100.00, "change_24h": 2.7, "high_w": 105.00, "low_w": 95.00}
 ]
  
-app = FastAPI()#
+app = FastAPI()
+app.include_router(stock.router)
 
 def decideStockValues():
     for stock in stocks:
         low_threshold = stock["low_w"]+ stock["low_w"] * 0.10
-        high_threshold = stock["high_w"] + stock["high_w"] * 0.10#
-        nextval = random.uniform(low_threshold, high_threshold)#
+        high_threshold = stock["high_w"] + stock["high_w"] * 0.10
+        nextval = random.uniform(low_threshold, high_threshold)
         stock["change_24h"] =  (1 - (nextval / stock["value"])) * 100 
         stock["value"] = round(nextval,2)
         
@@ -51,11 +54,18 @@ def decideStockValues():
         elif stock["value"] > stock["high_w"]:
             stock["high_w"] = stock["value"]
 
-@app.on_event("startup")
-async def startup():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+async def sleep_in_db():
+        print(engine.pool.status()) # 0 connections
+        async with engine.connect() as connection:
+            print(engine.pool.status()) # 1 connections
+            while True:
+                await connection.execute(text("select now();"))
+                await asyncio.sleep(1)
 
+@app.on_event("startup") 
+async def startup(): 
+    async with engine.connect() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 @app.get("/backend/updatestockdata")
 async def root():
