@@ -5,9 +5,9 @@ class StockBase(BaseModel):
     name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
-class CreatePost(PostBase):
+class CreateStock(StockBase):
     class Config:
-        orm_mode = True
+        from_attributes = True

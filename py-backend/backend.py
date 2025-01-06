@@ -2,20 +2,18 @@ from fastapi import FastAPI
 import json
 import random
 from datetime import datetime, timedelta
+from model import Stock
+import schemas
 import model
-import db
+import stock
+from db import DATABASE_URL, engine, Base
 import sys
 
 # Store the last run time
 last_run_time = datetime.now()
 
-print(sys.executable)
-
-#create binding with db
-models.Base.metadata.create_all(bind=engine)
-
-
 def should_run():
+    global last_run_time
     # Get the current time
     current_time = datetime.now()
     # Check if 5 minutes have passed since the last run
@@ -38,15 +36,13 @@ stocks = [
     {"symbol": "AMD", "value": 100.00, "change_24h": 2.7, "high_w": 105.00, "low_w": 95.00}
 ]
  
-app = FastAPI()
+app = FastAPI()#
 
 def decideStockValues():
     for stock in stocks:
         low_threshold = stock["low_w"]+ stock["low_w"] * 0.10
-        high_threshold = stock["high_w"] + stock["high_w"] * 0.10
-
-        nextval = random.uniform(low_threshold, high_threshold)
-
+        high_threshold = stock["high_w"] + stock["high_w"] * 0.10#
+        nextval = random.uniform(low_threshold, high_threshold)#
         stock["change_24h"] =  (1 - (nextval / stock["value"])) * 100 
         stock["value"] = round(nextval,2)
         
@@ -54,6 +50,12 @@ def decideStockValues():
             stock["low_w"] = stock["value"]
         elif stock["value"] > stock["high_w"]:
             stock["high_w"] = stock["value"]
+
+@app.on_event("startup")
+async def startup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
 
 @app.get("/backend/updatestockdata")
 async def root():
