@@ -1,13 +1,15 @@
 from fastapi import FastAPI
-
 import json
 import random
 from datetime import datetime, timedelta
 import model
 import db
+import sys
 
 # Store the last run time
 last_run_time = datetime.now()
+
+print(sys.executable)
 
 #create binding with db
 models.Base.metadata.create_all(bind=engine)
@@ -22,8 +24,6 @@ def should_run():
         return True
     else:
         return False
-
-
 
 stocks = [
     {"symbol": "AAPL", "value": 150.00, "change_24h": 1.5, "high_w": 155.00, "low_w": 145.00},
@@ -54,7 +54,6 @@ def decideStockValues():
             stock["low_w"] = stock["value"]
         elif stock["value"] > stock["high_w"]:
             stock["high_w"] = stock["value"]
-
 
 @app.get("/backend/updatestockdata")
 async def root():
