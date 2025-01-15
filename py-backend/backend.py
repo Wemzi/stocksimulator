@@ -6,12 +6,12 @@ from model import Stock
 import schemas
 import model
 import stock
-from db import DATABASE_URL, engine, Base, SessionLocal
-from sqlalchemy import inspect
+from db import DATABASE_URL, engine, Base, SessionLocal, create_tables
+from sqlalchemy import inspect, text
 import sys
 import logging
+import asyncio
 
-# Store the last run time
 last_run_time = datetime.now()
 
 def should_run():
@@ -37,31 +37,35 @@ stocks = [
     {"symbol": "INTC", "value": 55.00, "change_24h": -0.5, "high_w": 58.00, "low_w": 52.00},
     {"symbol": "AMD", "value": 100.00, "change_24h": 2.7, "high_w": 105.00, "low_w": 95.00}
 ]
- 
+
+
 app = FastAPI()
 app.include_router(stock.router)
-Base.metadata.create_all(bind=engine)
+
+if __name__ == "__main__":
+    # Store the last run time
+    asyncio.run(create_tables())
 
 def decideStockValues():
     for stock in stocks:
-        low_threshold = stock["low_w"]+ stock["low_w"] * 0.10
+        low_threshold = stock["low_w"] + stock["low_w"] * 0.10
         high_threshold = stock["high_w"] + stock["high_w"] * 0.10
         nextval = random.uniform(low_threshold, high_threshold)
-        stock["change_24h"] =  (1 - (nextval / stock["value"])) * 100 
-        stock["value"] = round(nextval,2)
-        
+        stock["change_24h"] = (1 - (nextval / stock["value"])) * 100
+        stock["value"] = round(nextval, 2)
+
         if stock["value"] < stock["low_w"]:
             stock["low_w"] = stock["value"]
         elif stock["value"] > stock["high_w"]:
             stock["high_w"] = stock["value"]
 
 async def sleep_in_db():
-        print(engine.pool.status()) # 0 connections
-        async with engine.connect() as connection:
-            print(engine.pool.status()) # 1 connections
-            while True:
-                await connection.execute(text("select now();"))
-                await asyncio.sleep(1)
+    print(engine.pool.status())  # 0 connections
+    async with engine.connect() as connection:
+        print(engine.pool.status())  # 1 connection
+        while True:
+            await connection.execute(text("select now();"))
+            await asyncio.sleep(1)
 
 @app.get("/backend/updatestockdata")
 async def root():
