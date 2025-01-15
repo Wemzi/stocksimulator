@@ -9,7 +9,7 @@ class Stock(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     stock_name = Column(String, nullable=False)
-    value = Column(Integer, nullable=False)
-    high_w = Column(Integer, )
-    low_w = Column(Integer, nullable=False)
+    value = Column(Integer, nullable=True)
+    high_w = Column(Integer, nullable=True )
+    low_w = Column(Integer, nullable=True)
     timestamp = Column(TIMESTAMP(timezone=True), server_default=text('now()'))

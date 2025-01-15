@@ -40,6 +40,7 @@ stocks = [
  
 app = FastAPI()
 app.include_router(stock.router)
+Base.metadata.create_all(bind=engine)
 
 def decideStockValues():
     for stock in stocks:
@@ -61,11 +62,6 @@ async def sleep_in_db():
             while True:
                 await connection.execute(text("select now();"))
                 await asyncio.sleep(1)
-
-@app.on_event("startup") 
-async def startup(): 
-    async with engine.connect() as conn:
-        await conn.run_sync(Base.metadata.create_all)
 
 @app.get("/backend/updatestockdata")
 async def root():
