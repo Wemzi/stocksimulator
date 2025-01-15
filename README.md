@@ -2,13 +2,15 @@
 One thing worth noting is that the application was developed on tested on an Apple Silicon Mac, so other operating systems and architectures might experience issues, as those were not tested.
 
 # Getting Started
-The repository does not contain the Docker container and it must be built using the included Dockerfile.
+The repository does not contain the Docker image and it must be built using the included Dockerfile.
 
 This can be done using: 
 ` docker build -t stocksimulator . `
 
 The docker image can be built and launched with the following options: 
 ` docker run -p 30000:8080 -p 30001:8000 stocksimulator:latest `
+
+it also needs postgres:latest
 
 ### Reference Documentation
 For further reference, please consider the following sections:
