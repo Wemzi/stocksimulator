@@ -1,12 +1,11 @@
 from typing import List
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends, APIRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from starlette import status
 import model
 import schemas
 import stock
-from fastapi import APIRouter
 from db import get_db
 
 router = APIRouter(

@@ -1,18 +1,20 @@
 from fastapi import FastAPI
-import json
 import random
 from datetime import datetime, timedelta
 from model import Stock
 import schemas
-import model
 import stock
-from db import DATABASE_URL, engine, Base, SessionLocal, create_tables
-from sqlalchemy import inspect, text
+from db import engine, create_tables
+from sqlalchemy import text
 import sys
 import logging
 import asyncio
 
 last_run_time = datetime.now()
+
+app = FastAPI()
+app.include_router(stock.router)
+
 
 def should_run():
     global last_run_time
@@ -39,12 +41,8 @@ stocks = [
 ]
 
 
-app = FastAPI()
-app.include_router(stock.router)
 
-if __name__ == "__main__":
-    # Store the last run time
-    asyncio.run(create_tables())
+
 
 def decideStockValues():
     for stock in stocks:
@@ -66,6 +64,12 @@ async def sleep_in_db():
         while True:
             await connection.execute(text("select now();"))
             await asyncio.sleep(1)
+
+async def startup_event(): 
+    await create_tables()
+    print("started sqlalchemy")
+
+app.add_event_handler("startup", startup_event)
 
 @app.get("/backend/updatestockdata")
 async def root():
