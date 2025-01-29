@@ -33,18 +33,19 @@ export default {
         { name: 'TSLA', change: 0.5 }
       ],
       selectedStock: null,
-      chartData: null,
+      chartData: {},
       chartOptions: {
         animation: {
           duration: 2000,
           easing: 'easeInOutBounce'
         },
         scales: {
-          yAxes: [{
-            ticks: {
-              beginAtZero: true
-            }
-          }]
+          y: {
+            beginAtZero: true
+          },
+          x: {
+            beginAtZero: true
+          }
         }
       }
     }
@@ -58,7 +59,7 @@ export default {
           data: [Math.random() * 10, Math.random() * 10, this.selectedStock.change],
           borderColor: 'rgba(75, 192, 192, 1)',
           borderWidth: 1,
-          fill: false
+          fill: true
         }]
       }
     }
