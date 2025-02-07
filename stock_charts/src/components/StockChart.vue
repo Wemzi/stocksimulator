@@ -15,15 +15,19 @@ export default {
   extends: Line,
   props: ['data', 'options'],
   mounted() {
-    this.renderChart()
+    this.renderChart(this.data, this.options)
   },
   methods: {
-    renderChart() {
-      new Chart(this.$refs.canvas, {
+    renderChart(data, options) {
+      console.log(data)
+      if (this.chart) {
+        this.chart.destroy()
+      }
+      this.chart = new Chart(this.$refs.canvas, {
         type: 'line',
-        data: this.data,
+        data: data,
         options: {
-          ...this.options,
+          ...options,
           scales: {
             y: {
               beginAtZero: true
@@ -31,9 +35,29 @@ export default {
             x: {
               beginAtZero: true
             }
+          },
+          elements: {
+            line: {
+              borderColor: 'blue',
+              borderWidth: 2
+            }
           }
         }
       })
+    }
+  },
+  watch: {
+    data: {
+      handler(newData) {
+        this.renderChart(newData, this.options)
+      },
+      deep: true
+    },
+    options: {
+      handler(newOptions) {
+        this.renderChart(this.data, newOptions)
+      },
+      deep: true
     }
   }
 }
