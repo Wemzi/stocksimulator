@@ -18,6 +18,7 @@
 
 <script>
 import StockChart from './components/StockChart.vue'
+import api from './api/api.js'
 
 export default {
   components: {
@@ -25,13 +26,7 @@ export default {
   },
   data() {
     return {
-      stocks: [
-        { name: 'AAPL', change: 2.6, values: [1.5, 2.0, 2.5, 1.8, 1.7, 2.3, 2.1, 1.9, 2.4, 2.6] },
-        { name: 'GOOGL', change: -0.4, values: [-0.8, -0.6, -0.7, -0.9, -1.0, -0.8, -0.7, -0.6, -0.5, -0.4] },
-        { name: 'AMZN', change: 2.3, values: [2.3, 2.1, 2.4, 2.6, 2.7, 2.5, 2.8, 2.9, 2.4, 2.3] },
-        { name: 'MSFT', change: -0.8, values: [-1.2, -1.0, -1.1, -1.3, -1.4, -1.2, -1.1, -1.0, -0.9, -0.8] },
-        { name: 'TSLA', change: 0.3, values: [0.5, 0.6, 0.4, 0.3, 0.5, 0.7, 0.6, 0.5, 0.4, 0.3] }
-      ],
+      stocks: [],
       selectedStock: null,
       chartData: {},
       chartOptions: {
@@ -60,28 +55,41 @@ export default {
   },
   methods: {
     updateChart() {
-      const allValues = this.stocks.flatMap(stock => stock.values);
-      this.chartOptions.scales.y.min = Math.min(...allValues) - 1;
-      this.chartOptions.scales.y.max = Math.max(...allValues) + 1;
+      if (this.selectedStock) {
+        const allValues = this.stocks.flatMap(stock => stock.values)
+        this.chartOptions.scales.y.min = Math.min(...allValues) - 1
+        this.chartOptions.scales.y.max = Math.max(...allValues) + 1
 
-      this.chartData = {
-        labels: ['Value 1', 'Value 2', 'Value 3', 'Value 4', 'Value 5', 'Value 6', 'Value 7', 'Value 8', 'Value 9', 'Value 10'],
-        datasets: [{
-          label: this.selectedStock.name,
-          data: this.selectedStock.values,
-          borderColor: 'rgba(75, 192, 192, 1)',
-          borderWidth: 1,
-          fill: false
-        }]
+        this.chartData = {
+          labels: ['Value 1', 'Value 2', 'Value 3', 'Value 4', 'Value 5', 'Value 6', 'Value 7', 'Value 8', 'Value 9', 'Value 10'],
+          datasets: [{
+            label: this.selectedStock.name,
+            data: this.selectedStock.values,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1,
+            fill: false
+          }]
+        }
+
+        // Print the dataset to the console
+        console.log('Chart Dataset:', this.chartData)
       }
-
-      // Print the dataset to the console
-      console.log('Chart Dataset:', this.chartData)
+    },
+    fetchStocks() {
+      api.getStocks().then(response => {
+        this.stocks = response.data.map(stock => ({
+          ...stock,
+          values: stock.values.split(',').map(value => parseFloat(value.trim()))
+        }))
+        this.selectedStock = this.stocks[0]
+        this.updateChart()
+      }).catch(error => {
+        console.error('There was an error!', error)
+      })
     }
   },
   mounted() {
-    this.selectedStock = this.stocks[0]
-    this.updateChart()
+    this.fetchStocks()
   }
 }
 </script>
