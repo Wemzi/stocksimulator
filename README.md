@@ -8,7 +8,7 @@ This can be done using:
 ` docker build -t stocksimulator . `
 
 The docker image can be built and launched with the following options: 
-` docker run -p 30000:8080 -p 30001:8000 stocksimulator:latest `
+` docker run -p 30000:8080 -p 30001:8000 -P 30002:5173 stocksimulator:latest `
 
 it also needs postgres:latest
 
