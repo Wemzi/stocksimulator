@@ -6,7 +6,7 @@ RUN dnf install java-21-openjdk-devel.aarch64
 RUN dnf install python3.12.aarch64
 RUN python3 -m ensurepip --upgrade
 RUN python3 -m pip install fastapi[standard] pydantic sqlalchemy
-RUN chmod +x ./fastapi-backend/backend.py
+RUN chmod +x ./py-backend/backend.py
 RUN dnf install nodejs -ye
 RUN cd stock_charts
 RUN npm install
