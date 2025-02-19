@@ -4,14 +4,22 @@ One thing worth noting is that the application was developed on tested on an App
 # Getting Started
 The repository does not contain the Docker image and it must be built using the included Dockerfile.
 
+
 This can be done using: 
 ` docker build -t stocksimulator . `
 
-The docker image can be built and launched with the following options: 
-` docker run -p 30000:8080 -p 30001:8000 -P 30002:5173 stocksimulator:latest `
+The docker image can be launched with the following options: 
+` docker run --name stocksim-app --network stocksim-network -p 30000:8080 -p 30001:8000 -p 30002:5173 stocksimulator:latest `
 
-it also needs postgres:latest
+There is another docker image that is required, named 'postgres:latest'. At this point I couldn't make one image that contains all the dependencies. this is also needed to be run, with this command:
 
+` docker run --name stocksim-db --network stocksim-network -e POSTGRES_PASSWORD=1999 -e POSTGRES_USER=postgres -e POSTGRES_DB=fastapi postgres:latest `
+
+Then, the following addresses contain self-explanatory content: 
+
+- http://localhost:30000/backend
+- http://localhost:30001/backend/updatestockdata
+- http://localhost:30002
 ### Reference Documentation
 For further reference, please consider the following sections:
 
