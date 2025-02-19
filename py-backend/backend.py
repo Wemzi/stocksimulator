@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import random
 from datetime import datetime, timedelta
 from model import Stock
@@ -14,6 +15,19 @@ last_run_time = datetime.now()
 
 app = FastAPI()
 app.include_router(stock.router)
+
+origins = [
+    "http://localhost",
+    "http://localhost:8080"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def should_run():

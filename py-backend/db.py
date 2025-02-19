@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 import asyncio
 from model import Stock
 
-DATABASE_URL = "postgresql+asyncpg://postgres:1999@stocksim-db:5432/fastapi"
+DATABASE_URL = "postgresql+asyncpg://postgres:1999@localhost/fastapi"
 
 # Use create_async_engine for asynchronous operations
 engine = create_async_engine(DATABASE_URL, echo=True)
