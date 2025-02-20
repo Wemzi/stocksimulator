@@ -1,12 +1,11 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 import random
 from datetime import datetime, timedelta
-from model import Stock
+from model import Stock, StockValue
 import schemas
 import stock
 from db import engine, create_tables, get_db
-from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 import logging
@@ -42,15 +41,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def should_run():
-    global last_run_time
-    current_time = datetime.now()
-    if current_time - last_run_time >= timedelta(minutes=3):
-        last_run_time = datetime.now()
-        return True
-    else:
-        return False
-
 async def sync_initial_stocks(db: AsyncSession):
     for stock_data in stocks:
         result = await db.execute(select(Stock).filter(Stock.stock_name == stock_data["stock_name"]))
@@ -61,47 +51,56 @@ async def sync_initial_stocks(db: AsyncSession):
         else:
             db_stock = Stock(stock_name=stock_data["stock_name"], high_w=stock_data["high_w"], low_w=stock_data["low_w"])
             db.add(db_stock)
+            await db.commit()
+            await db.refresh(db_stock)
+        new_value = StockValue(stock_id=db_stock.id, value=stock_data["value"], timestamp=datetime.now())
+        db.add(new_value)
         await db.commit()
-        
 
-async def decide_stock_values(db: Session):
-    stocks = db.execute(Stock).all()
-    for stock in stocks:
-        low_threshold = stock.low_w + stock.low_w * 0.10
-        high_threshold = stock.high_w + stock.high_w * 0.10
-        nextval = random.uniform(low_threshold, high_threshold)
-        # Assuming there is a corresponding StockValue entry that you want to update
-        stock_value = db.execute(StockValue).filter(StockValue.stock_id == stock.id).first()
-        if stock_value:
-            stock_value.change_24h = (1 - (nextval / stock_value.value)) * 100
-            stock_value.value = round(nextval, 2)
-            db.commit()
-        if stock_value.value < stock.low_w:
-            stock.low_w = stock_value.value
-        elif stock_value.value > stock.high_w:
-            stock.high_w = stock_value.value
-    db.commit()
+        # Add initial stock value
 
-async def sleep_in_db():
-    print(engine.pool.status())  # 0 connections
-    async with engine.connect() as connection:
-        print(engine.pool.status())  # 1 connection
-        while True:
-            await connection.execute(text("select now();"))
-            await asyncio.sleep(1)
+
+async def decide_stock_values(db: AsyncSession):
+    result_all_stocks_in_db = await db.execute(select(Stock))
+    all_stocks_in_db = result_all_stocks_in_db.scalars().all()
+    stock_index = 1
+    for stock in all_stocks_in_db:
+        result_stockvalues = await db.execute(select(StockValue))
+        stockvalues = result_stockvalues.scalars().all()
+        stockvalues = [stockvalue for stockvalue in stockvalues if stockvalue.stock_id == stock_index]
+        if stockvalues:
+            db_stockvalue = stockvalues[-1]  # Get the most recent stock value entry for the stock
+            low_threshold = db_stockvalue.value - db_stockvalue.value * 0.10
+            high_threshold = db_stockvalue.value + db_stockvalue.value * 0.10
+            nextval = random.uniform(low_threshold, high_threshold)
+            new_value = StockValue(stock_id=db_stockvalue.stock_id, value=int(round(nextval)), timestamp=datetime.now())
+            db.add(new_value)
+            await db.commit()
+        else:
+            # If no stock values are found, create a new stock value entry
+            initial_value = StockValue(stock_id=stock.id, value=stock.low_w, timestamp=datetime.now())
+            db.add(initial_value)
+            await db.commit()
+            await db.refresh(stock)
+        stock_index = stock_index + 1
+    
+    print("Stock values updated successfully")
+
+
+
+async def background_task():
+    while True:
+        async with engine.begin() as conn:
+            async with AsyncSession(bind=conn) as db:
+                await decide_stock_values(db)
+        await asyncio.sleep(30)  # Sleep for 30 seconds
 
 async def startup_event():
     await create_tables()
     async with engine.begin() as conn:
-        db = AsyncSession(bind=conn)
-        await sync_initial_stocks(db)
-    print("Started SQLAlchemy")
+        async with AsyncSession(bind=conn) as db:
+            await sync_initial_stocks(db)
+    asyncio.create_task(background_task())  # Start the background task
 
 app.add_event_handler("startup", startup_event)
 
-@app.get("/backend/updatestockdata")
-async def root(db: Session = Depends(get_db)):
-    if should_run():
-        decide_stock_values(db)
-    results = await db.execute(Stock).all()
-    return results
