@@ -1,6 +1,6 @@
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, text, create_engine
+from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, text
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
 
@@ -9,7 +9,17 @@ class Stock(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     stock_name = Column(String, nullable=False)
-    value = Column(Integer, nullable=True)
-    high_w = Column(Integer, nullable=True )
+    high_w = Column(Integer, nullable=True)
     low_w = Column(Integer, nullable=True)
-    timestamp = Column(TIMESTAMP(timezone=True), server_default=text('now()'))
+
+    values = relationship("StockValue", back_populates="stock", cascade="all, delete")
+
+class StockValue(Base):
+    __tablename__ = "stock_values"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    stock_id = Column(Integer, ForeignKey('stocks.id', ondelete="CASCADE"), nullable=False)
+    value = Column(Integer, nullable=True)
+    timestamp = Column(TIMESTAMP(timezone=True), server_default=text('now()'), nullable=False)
+    
+    stock = relationship("Stock", back_populates="values")

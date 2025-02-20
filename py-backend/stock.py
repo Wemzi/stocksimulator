@@ -5,7 +5,6 @@ from sqlalchemy import select
 from starlette import status
 import model
 import schemas
-import stock
 from db import get_db
 
 router = APIRouter(
@@ -13,45 +12,65 @@ router = APIRouter(
     tags=['stocks']
 )
 
-@router.get('/', response_model=List[schemas.CreateStock])
-async def test_stocks(db: AsyncSession = Depends(get_db)):
+@router.get('/', response_model=List[schemas.Stock])
+async def get_stocks(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(model.Stock))
     stocks = result.scalars().all()
     return stocks
 
-@router.post('/', status_code=status.HTTP_201_CREATED, response_model=schemas.CreateStock)
-async def test_stocks_sent(stock_stock: schemas.CreateStock, db: AsyncSession = Depends(get_db)):
-    new_stock = model.Stock(**stock_stock.dict())
+@router.post('/', status_code=status.HTTP_201_CREATED, response_model=schemas.Stock)
+async def create_stock(stock: schemas.StockCreate, db: AsyncSession = Depends(get_db)):
+    new_stock = model.Stock(**stock.dict())
     db.add(new_stock)
     await db.commit()
     await db.refresh(new_stock)
     return new_stock
 
-@router.get('/{id}', response_model=schemas.CreateStock, status_code=status.HTTP_200_OK)
-async def get_test_one_stock(id: int, db: AsyncSession = Depends(get_db)):
+@router.get('/{id}', response_model=schemas.Stock, status_code=status.HTTP_200_OK)
+async def get_stock(id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(model.Stock).filter(model.Stock.id == id))
-    idv_stock = result.scalar_one_or_none()
-    if idv_stock is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"The id: {id} you requested for does not exist")
-    return idv_stock
+    stock = result.scalar_one_or_none()
+    if stock is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"The id: {id} you requested does not exist")
+    return stock
 
 @router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
-async def delete_test_stock(id: int, db: AsyncSession = Depends(get_db)):
+async def delete_stock(id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(model.Stock).filter(model.Stock.id == id))
-    deleted_stock = result.scalar_one_or_none()
-    if deleted_stock is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"The id: {id} you requested for does not exist")
-    await db.delete(deleted_stock)
+    stock = result.scalar_one_or_none()
+    if stock is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"The id: {id} you requested does not exist")
+    await db.delete(stock)
     await db.commit()
 
-@router.put('/stocks/{id}', response_model=schemas.CreateStock)
-async def update_test_stock(update_stock: schemas.StockBase, id: int, db: AsyncSession = Depends(get_db)):
+@router.put('/{id}', response_model=schemas.Stock)
+async def update_stock(id: int, stock_update: schemas.StockUpdate, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(model.Stock).filter(model.Stock.id == id))
-    updated_stock = result.scalar_one_or_none()
-    if updated_stock is None:
+    stock = result.scalar_one_or_none()
+    if stock is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"The id: {id} does not exist")
-    for key, value in update_stock.dict().items():
-        setattr(updated_stock, key, value)
+    for key, value in stock_update.dict().items():
+        setattr(stock, key, value)
     await db.commit()
-    await db.refresh(updated_stock)
-    return updated_stock
+    await db.refresh(stock)
+    return stock
+
+@router.post('/{id}/value', response_model=schemas.StockValue)
+async def create_stock_value(id: int, stock_value: schemas.StockValueCreate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(model.Stock).filter(model.Stock.id == id))
+    stock = result.scalar_one_or_none()
+    if stock is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"The id: {id} does not exist")
+    new_value = model.StockValue(stock_id=id, **stock_value.dict())
+    db.add(new_value)
+    await db.commit()
+    await db.refresh(new_value)
+    return new_value
+
+@router.get('/{id}/values', response_model=List[schemas.StockValue])
+async def get_stock_values(id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(model.StockValue).filter(model.StockValue.stock_id == id))
+    values = result.scalars().all()
+    if not values:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No values found for stock id: {id}")
+    return values
