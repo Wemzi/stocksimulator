@@ -1,5 +1,6 @@
 # Read Me First
 One thing worth noting is that the application was developed on tested on an Apple Silicon Mac, so other operating systems and architectures might experience issues, as those were not tested.
+![image](https://github.com/user-attachments/assets/9d1d7983-1778-45b6-84d8-8e3659d27733)
 
 # Getting Started
 The repository does not contain the Docker image and it must be built using the included Dockerfile.
