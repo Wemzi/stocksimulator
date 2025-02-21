@@ -65,6 +65,23 @@ async def create_stock_value(id: int, stock_value: schemas.StockValueCreate, db:
     db.add(new_value)
     await db.commit()
     await db.refresh(new_value)
+    
+    # Calculate the percentage change
+    previous_value = await db.execute(select(model.StockValue).filter(model.StockValue.stock_id == id).order_by(model.StockValue.timestamp.desc()))
+    previous_value = previous_value.scalars().first()
+    if previous_value:
+        percentage_change = ((new_value.value - previous_value.value) / previous_value.value) * 100
+        stock.percentage_change = percentage_change
+    
+    # Update the latest value and low_w/high_w fields if necessary
+    stock.latest_value = new_value.value
+    if new_value.value < stock.low_w:
+        stock.low_w = new_value.value
+    if new_value.value > stock.high_w:
+        stock.high_w = new_value.value
+    await db.commit()
+    await db.refresh(stock)
+
     return new_value
 
 @router.get('/{id}/values', response_model=List[schemas.StockValue])

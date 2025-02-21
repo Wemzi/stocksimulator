@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, text
+from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, text, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -11,6 +11,8 @@ class Stock(Base):
     stock_name = Column(String, nullable=False)
     high_w = Column(Integer, nullable=True)
     low_w = Column(Integer, nullable=True)
+    percentage_change = Column(Float, nullable=True)
+    latest_value = Column(Integer, nullable=True)
 
     values = relationship("StockValue", back_populates="stock", cascade="all, delete")
 

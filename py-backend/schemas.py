@@ -43,6 +43,8 @@ class Stock(BaseModel):
     stock_name: str
     high_w: int
     low_w: int
+    percentage_change: Optional[float] = None  # New field for percentage change
+    latest_value: Optional[float] = None  # New field for the most up-to-date value
 
     class Config:
         from_attributes = True
