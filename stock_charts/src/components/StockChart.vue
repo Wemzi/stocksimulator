@@ -1,7 +1,6 @@
 <template>
   <div>
     <canvas ref="canvas"></canvas>
-    <h1> hello </h1>
   </div>
 </template>
 

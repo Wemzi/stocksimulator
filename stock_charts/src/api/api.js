@@ -1,15 +1,25 @@
-import axios from 'axios'
+import axios from 'axios';
 
-const apiClient = axios.create({
-  baseURL: 'http://127.0.0.1:8000',
-  withCredentials: false,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-})
+const API_URL = 'http://127.0.0.1:8000';
 
 export default {
-  getStocks() {
-    return apiClient.get('/stocks/')
+  async getStocks() {
+    try {
+      const response = await axios.get(`${API_URL}/stocks/`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching stocks:', error);
+      throw error;
+    }
+  },
+
+  async getStockValues(stockId) {
+    try {
+      const response = await axios.get(`${API_URL}/stocks/${stockId}/values`);
+      return response;
+    } catch (error) {
+      console.error(`Error fetching values for stock ID ${stockId}:`, error);
+      throw error;
+    }
   }
-}
+};
