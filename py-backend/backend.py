@@ -81,7 +81,6 @@ async def decide_stock_values(db: AsyncSession):
             nextval = random.uniform(low_threshold, high_threshold)
             nextval = int(round(nextval))
             new_value = StockValue(stock_id=db_stockvalue.stock_id, value=nextval, timestamp=datetime.now())
-            # Update stock attributes
             percentage_change = ((nextval - db_stockvalue.value) / db_stockvalue.value) * 100
             db.add(new_value)
             await db.commit()
@@ -104,7 +103,7 @@ async def decide_stock_values(db: AsyncSession):
             db.add(new_value)
             await db.commit()    
             stock.latest_value = initial_value
-            stock.percentage_change = 0.0  # Initial percentage change is 0
+            stock.percentage_change = 0.0 
             db.add(stock)
             await db.commit()
         stock_index += 1
